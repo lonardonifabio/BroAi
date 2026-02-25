@@ -1,17 +1,17 @@
 [package]
-name = "fabio-claw"
+name = "broai"
 version = "0.1.0"
 edition = "2021"
 description = "Edge-first embedded LLM runtime for Raspberry Pi and Linux edge boards"
 authors = ["Fabio Lonardoni"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/lonardonifabio/fabio-claw"
+repository = "https://github.com/lonardonifabio/broai"
 keywords = ["llm", "edge-ai", "embedded", "inference", "raspberry-pi"]
 categories = ["embedded", "network-programming"]
 
 [[bin]]
-name = "fabio-claw"
+name = "broai"
 path = "src/main.rs"
 
 [dependencies]
@@ -59,3 +59,6 @@ opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
+
+[patch.crates-io]
+llama_cpp = { path = "vendor/llama_cpp" }

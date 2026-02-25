@@ -1,0 +1,8 @@
+{
+  "name": "plugin-rag-local",
+  "version": "0.1.0",
+  "description": "Local document retrieval with on-device token embeddings",
+  "commands": ["kb", "search-doc"],
+  "default_action": "kb",
+  "payload_from_args": true
+}

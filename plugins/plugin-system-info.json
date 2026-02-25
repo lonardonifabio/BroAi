@@ -1,0 +1,8 @@
+{
+  "name": "plugin-system-info",
+  "version": "0.1.0",
+  "description": "System telemetry for edge ops: CPU temp, RAM, uptime, disks",
+  "commands": ["sysinfo", "uptime", "disk"],
+  "default_action": "sysinfo",
+  "payload_from_args": true
+}

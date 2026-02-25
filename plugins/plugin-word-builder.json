@@ -1,0 +1,8 @@
+{
+  "name": "plugin-word-builder",
+  "version": "0.1.0",
+  "description": "Generate .docx files from prompt/template",
+  "commands": ["make-docx", "doc-template"],
+  "default_action": "make-docx",
+  "payload_from_args": true
+}

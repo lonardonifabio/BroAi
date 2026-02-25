@@ -1,0 +1,6 @@
+{
+  "git": {
+    "sha1": "55eb9691b13d07f56eaa68992d5e6accaa281691"
+  },
+  "path_in_vcs": "crates/llama_cpp"
+}

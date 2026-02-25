@@ -1,0 +1,8 @@
+{
+  "name": "plugin-gpio-control",
+  "version": "0.1.0",
+  "description": "GPIO control for Raspberry Pi (on/off/read) with dry-run fallback",
+  "commands": ["gpio"],
+  "default_action": "gpio",
+  "payload_from_args": true
+}

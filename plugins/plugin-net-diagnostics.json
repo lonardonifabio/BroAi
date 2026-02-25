@@ -1,0 +1,8 @@
+{
+  "name": "plugin-net-diagnostics",
+  "version": "0.1.0",
+  "description": "Network diagnostics: reachability, DNS status and average latency",
+  "commands": ["ping", "dns", "latency"],
+  "default_action": "ping",
+  "payload_from_args": true
+}
