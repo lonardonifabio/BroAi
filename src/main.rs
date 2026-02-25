@@ -34,13 +34,13 @@ impl Config {
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(8080),
             model_path: std::env::var("MODEL_PATH")
-                .unwrap_or_else(|_| "/opt/fabio-claw/models/model.gguf".into()),
+                .unwrap_or_else(|_| "/opt/broai/models/model.gguf".into()),
             db_path: std::env::var("DB_PATH")
-                .unwrap_or_else(|_| "/var/lib/fabio-claw/memory.db".into()),
+                .unwrap_or_else(|_| "/var/lib/broai/memory.db".into()),
             key_path: std::env::var("KEY_PATH")
-                .unwrap_or_else(|_| "/var/lib/fabio-claw/device.key".into()),
+                .unwrap_or_else(|_| "/var/lib/broai/device.key".into()),
             plugin_dir: std::env::var("PLUGIN_DIR")
-                .unwrap_or_else(|_| "/opt/fabio-claw/plugins".into()),
+                .unwrap_or_else(|_| "/opt/broai/plugins".into()),
         }
     }
 }
@@ -57,7 +57,7 @@ async fn main() {
         .init();
 
     info!(
-        "🦀 Fabio-Claw v{} starting",
+        "🦀 BroAi v{} starting",
         env!("CARGO_PKG_VERSION")
     );
 
@@ -126,7 +126,7 @@ async fn main() {
         .await
         .expect("Server error");
 
-    info!("Fabio-Claw shutdown complete");
+    info!("BroAi shutdown complete");
 }
 
 /// Listen for Ctrl-C or SIGTERM for graceful shutdown

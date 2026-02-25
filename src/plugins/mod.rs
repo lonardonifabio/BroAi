@@ -13,7 +13,7 @@ const PLUGIN_TIMEOUT_SECS: u64 = 10;
 // ─── Manifest ────────────────────────────────────────────────────────────────
 
 /// Each plugin ships a <name>.json manifest alongside its binary.
-/// fabio-claw reads all manifests at startup and builds the routing table.
+/// broai reads all manifests at startup and builds the routing table.
 #[derive(Debug, Clone, Deserialize)]
 pub struct PluginManifest {
     /// Binary name (must match the executable in the plugins dir)
@@ -33,7 +33,7 @@ pub struct PluginManifest {
 // ─── Registry ────────────────────────────────────────────────────────────────
 
 /// Loaded at startup; maps command → manifest.
-/// Never changes at runtime — restart fabio-claw to pick up new plugins.
+/// Never changes at runtime — restart broai to pick up new plugins.
 #[derive(Debug, Clone)]
 pub struct PluginRegistry {
     /// command (lowercase) → manifest

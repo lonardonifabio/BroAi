@@ -20,8 +20,8 @@ struct PluginResponse {
 const ALLOWED_DIRS: &[&str] = &[
     "/home/pi/documents",
     "/home/pi/data",
-    "/tmp/fabio-claw",
-    "/var/lib/fabio-claw/data",
+    "/tmp/broai",
+    "/var/lib/broai/data",
 ];
 
 const MAX_FILE_SIZE: u64 = 512 * 1024; // 512KB max

@@ -1,21 +1,21 @@
-# 🦀 Fabio-Claw
+# 🦀 BroAi
 
-**Fabio-Claw** is an edge-first, embedded LLM runtime built in Rust — designed for serious edge AI deployments on Raspberry Pi 4 and other Linux ARM boards.
+**BroAi** is an edge-first, embedded LLM runtime built in Rust — designed for serious edge AI deployments on Raspberry Pi 4 and other Linux ARM boards.
 
 > Run private, local AI inference without cloud dependency. OpenAI-compatible API. Near-zero boot time. Production security architecture.
 
 ---
 
-## Why Fabio-Claw?
+## Why BroAi?
 
 | Engine | Language | RAM | Startup | Cost Target |
 |---|---|---|---|---|
 | OpenClaw | TypeScript | >1GB | >500s | Mac Mini $599 |
 | NanoBot | Python | >100MB | >30s | Linux SBC ~$50 |
 | PicoClaw | Go | <10MB | <1s | Any Linux board ~$10 |
-| **Fabio-Claw** | **Rust** | **Optimized for 8GB** | **Near-instant (preloaded)** | **Raspberry Pi / Edge** |
+| **BroAi** | **Rust** | **Optimized for 8GB** | **Near-instant (preloaded)** | **Raspberry Pi / Edge** |
 
-Fabio-Claw targets environments where:
+BroAi targets environments where:
 - Cloud dependency is unacceptable (air-gapped, privacy-first, offline)
 - Security and auditability matter
 - Deterministic behavior is required
@@ -74,7 +74,7 @@ Plugin Sandbox (child process)     ← JSON over STDIN/STDOUT, 10s timeout, sig-
 ## Project Structure
 
 ```
-fabio-claw/
+broai/
 ├── Cargo.toml
 ├── README.md
 ├── chat.html            # Browser chat UI
@@ -148,8 +148,8 @@ cargo --version
 
 ```bash
 cd ~
-git clone https://github.com/lonardonifabio/fabio-claw.git
-cd fabio-claw
+git clone https://github.com/lonardonifabio/broai.git
+cd broai
 ```
 
 Verify the source structure:
@@ -176,10 +176,10 @@ src/security/mod.rs
 ### Phase 3 — Create Runtime Directories
 
 ```bash
-sudo mkdir -p /opt/fabio-claw/models
-sudo mkdir -p /opt/fabio-claw/plugins
-sudo mkdir -p /var/lib/fabio-claw
-sudo chown -R $USER:$USER /opt/fabio-claw /var/lib/fabio-claw
+sudo mkdir -p /opt/broai/models
+sudo mkdir -p /opt/broai/plugins
+sudo mkdir -p /var/lib/broai
+sudo chown -R $USER:$USER /opt/broai /var/lib/broai
 ```
 
 ---
@@ -197,19 +197,19 @@ Choose a model based on your available RAM:
 
 **TinyLlama (4GB Pi, fast responses ~5s):**
 ```bash
-wget -O /opt/fabio-claw/models/model.gguf \
+wget -O /opt/broai/models/model.gguf \
   https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
 ```
 
 **Mistral 7B (8GB Pi, best quality ~60-120s per response):**
 ```bash
-wget -O /opt/fabio-claw/models/model.gguf \
+wget -O /opt/broai/models/model.gguf \
   https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf
 ```
 
 Verify the download:
 ```bash
-ls -lh /opt/fabio-claw/models/model.gguf
+ls -lh /opt/broai/models/model.gguf
 # TinyLlama: ~636MB  |  Mistral 7B: ~4.1GB
 ```
 
@@ -218,7 +218,7 @@ ls -lh /opt/fabio-claw/models/model.gguf
 ### Phase 5 — Build the Project
 
 ```bash
-cd ~/fabio-claw
+cd ~/broai
 cargo build --release
 ```
 
@@ -231,25 +231,25 @@ Finished `release` profile [optimized] target(s) in XX:XX
 
 **Install the binary system-wide:**
 ```bash
-sudo cp target/release/fabio-claw /usr/local/bin/
+sudo cp target/release/broai /usr/local/bin/
 ```
 
 ---
 
 ### Phase 6 — Install as a systemd Service
 
-This makes Fabio-Claw start automatically on every boot:
+This makes BroAi start automatically on every boot:
 
 ```bash
-sudo tee /etc/systemd/system/fabio-claw.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/broai.service > /dev/null <<EOF
 [Unit]
-Description=Fabio-Claw Edge LLM Runtime
+Description=BroAi Edge LLM Runtime
 After=network.target
 
 [Service]
 Type=simple
 User=pi
-ExecStart=/usr/local/bin/fabio-claw
+ExecStart=/usr/local/bin/broai
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -257,10 +257,10 @@ StandardError=journal
 
 Environment=HOST=0.0.0.0
 Environment=PORT=8080
-Environment=MODEL_PATH=/opt/fabio-claw/models/model.gguf
-Environment=DB_PATH=/var/lib/fabio-claw/memory.db
-Environment=KEY_PATH=/var/lib/fabio-claw/device.key
-Environment=PLUGIN_DIR=/opt/fabio-claw/plugins
+Environment=MODEL_PATH=/opt/broai/models/model.gguf
+Environment=DB_PATH=/var/lib/broai/memory.db
+Environment=KEY_PATH=/var/lib/broai/device.key
+Environment=PLUGIN_DIR=/opt/broai/plugins
 Environment=RUST_LOG=info
 
 [Install]
@@ -268,18 +268,18 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable fabio-claw
-sudo systemctl start fabio-claw
+sudo systemctl enable broai
+sudo systemctl start broai
 ```
 
 Check that it started correctly:
 ```bash
-sudo systemctl status fabio-claw
+sudo systemctl status broai
 ```
 
 Watch logs in real time:
 ```bash
-journalctl -u fabio-claw -f
+journalctl -u broai -f
 ```
 
 Wait until you see:
@@ -294,12 +294,12 @@ INFO  HTTP server listening  addr=0.0.0.0:8080
 
 ```bash
 # Copy the UI file
-cp ~/fabio-claw/chat.html ~/chat.html
+cp ~/broai/chat.html ~/chat.html
 
 # Install as a systemd service
-sudo tee /etc/systemd/system/fabio-claw-ui.service > /dev/null <<EOF
+sudo tee /etc/systemd/system/broai-ui.service > /dev/null <<EOF
 [Unit]
-Description=Fabio-Claw Chat UI
+Description=BroAi Chat UI
 After=network.target
 
 [Service]
@@ -314,8 +314,8 @@ WantedBy=multi-user.target
 EOF
 
 sudo systemctl daemon-reload
-sudo systemctl enable fabio-claw-ui
-sudo systemctl start fabio-claw-ui
+sudo systemctl enable broai-ui
+sudo systemctl start broai-ui
 ```
 
 Find your Pi's IP address:
@@ -392,7 +392,7 @@ Expected latency:
 
 ### Test 6 — Conversation Persistence
 ```bash
-sqlite3 /var/lib/fabio-claw/memory.db \
+sqlite3 /var/lib/broai/memory.db \
   "SELECT datetime(created_at), user_msg, assistant_msg FROM conversations ORDER BY id DESC LIMIT 5;"
 ```
 Expected: Your recent conversations saved with timestamps.
@@ -402,7 +402,7 @@ Expected: Your recent conversations saved with timestamps.
 ### Test 7 — Device Identity
 ```bash
 # Check key file permissions (must be 600)
-ls -la /var/lib/fabio-claw/device.key
+ls -la /var/lib/broai/device.key
 
 # Check device ID in API
 curl -s http://localhost:8080/health | python3 -m json.tool | grep device_id
@@ -443,10 +443,10 @@ All configuration via environment variables (set in the systemd service file):
 |---|---|---|
 | `HOST` | `0.0.0.0` | Bind address |
 | `PORT` | `8080` | HTTP port |
-| `MODEL_PATH` | `/opt/fabio-claw/models/model.gguf` | Path to GGUF model file |
-| `DB_PATH` | `/var/lib/fabio-claw/memory.db` | SQLite database path |
-| `KEY_PATH` | `/var/lib/fabio-claw/device.key` | Ed25519 private key path |
-| `PLUGIN_DIR` | `/opt/fabio-claw/plugins` | Plugin binary directory |
+| `MODEL_PATH` | `/opt/broai/models/model.gguf` | Path to GGUF model file |
+| `DB_PATH` | `/var/lib/broai/memory.db` | SQLite database path |
+| `KEY_PATH` | `/var/lib/broai/device.key` | Ed25519 private key path |
+| `PLUGIN_DIR` | `/opt/broai/plugins` | Plugin binary directory |
 | `RUST_LOG` | `info` | Log level (`debug`, `info`, `warn`, `error`) |
 
 ---
@@ -490,10 +490,10 @@ Returns `ready`, `llm_loaded`, `memory_ok`. Use for load balancer probes.
 
 | Path | Description |
 |---|---|
-| `/var/lib/fabio-claw/memory.db` | SQLite conversation database |
-| `/var/lib/fabio-claw/device.key` | Ed25519 device private key (600 permissions) |
-| `/opt/fabio-claw/models/model.gguf` | GGUF model file |
-| `/opt/fabio-claw/plugins/` | Plugin binaries directory |
+| `/var/lib/broai/memory.db` | SQLite conversation database |
+| `/var/lib/broai/device.key` | Ed25519 device private key (600 permissions) |
+| `/opt/broai/models/model.gguf` | GGUF model file |
+| `/opt/broai/plugins/` | Plugin binaries directory |
 
 ---
 
@@ -501,27 +501,27 @@ Returns `ready`, `llm_loaded`, `memory_ok`. Use for load balancer probes.
 
 ```bash
 # Service status
-sudo systemctl status fabio-claw
-sudo systemctl status fabio-claw-ui
+sudo systemctl status broai
+sudo systemctl status broai-ui
 
 # Live logs
-journalctl -u fabio-claw -f
+journalctl -u broai -f
 
 # Restart after binary update
-sudo cp ~/fabio-claw/target/release/fabio-claw /usr/local/bin/
-sudo systemctl restart fabio-claw
+sudo cp ~/broai/target/release/broai /usr/local/bin/
+sudo systemctl restart broai
 
 # Inspect the database
-sqlite3 /var/lib/fabio-claw/memory.db ".tables"
-sqlite3 /var/lib/fabio-claw/memory.db "SELECT count(*) FROM conversations;"
-sqlite3 /var/lib/fabio-claw/memory.db \
+sqlite3 /var/lib/broai/memory.db ".tables"
+sqlite3 /var/lib/broai/memory.db "SELECT count(*) FROM conversations;"
+sqlite3 /var/lib/broai/memory.db \
   "SELECT datetime(created_at), user_msg, assistant_msg FROM conversations ORDER BY id DESC LIMIT 10;"
 
 # Stop all services
-sudo systemctl stop fabio-claw fabio-claw-ui
+sudo systemctl stop broai broai-ui
 
 # Disable autostart
-sudo systemctl disable fabio-claw fabio-claw-ui
+sudo systemctl disable broai broai-ui
 ```
 
 ---
@@ -545,8 +545,8 @@ CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
 cargo build --release --target aarch64-unknown-linux-gnu
 
 # Deploy to Pi
-scp target/aarch64-unknown-linux-gnu/release/fabio-claw pi@<PI-IP>:/tmp/
-ssh pi@<PI-IP> "sudo cp /tmp/fabio-claw /usr/local/bin/ && sudo systemctl restart fabio-claw"
+scp target/aarch64-unknown-linux-gnu/release/broai pi@<PI-IP>:/tmp/
+ssh pi@<PI-IP> "sudo cp /tmp/broai /usr/local/bin/ && sudo systemctl restart broai"
 ```
 
 ---
@@ -590,8 +590,8 @@ cargo fmt
 Plugins are standalone executables communicating via JSON over STDIN/STDOUT:
 
 ```
-fabio-claw  →  [JSON request]  →  STDIN  →  plugin binary
-fabio-claw  ←  [JSON response] ←  STDOUT ←  plugin binary
+broai  →  [JSON request]  →  STDIN  →  plugin binary
+broai  ←  [JSON response] ←  STDOUT ←  plugin binary
 ```
 
 Each plugin must have a `.sig` signature file. Any plugin exceeding 10 seconds is killed.
@@ -607,8 +607,8 @@ MIT License — Copyright (c) 2026 Fabio Lonardoni
 ## Author
 
 **Fabio Lonardoni**
-Edge-first AI Runtime Engine · [GitHub](https://github.com/lonardonifabio/fabio-claw)
+Edge-first AI Runtime Engine · [GitHub](https://github.com/lonardonifabio/broai)
 
 ---
 
-> Fabio-Claw is not a wrapper. It is an operating layer for embedded AI.
+> BroAi is not a wrapper. It is an operating layer for embedded AI.

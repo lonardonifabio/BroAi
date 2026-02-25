@@ -88,7 +88,7 @@ pub async fn chat_completions(
                 .map(|(cmd, desc)| format!("  /{:<20} {}", cmd, desc))
                 .collect();
             let content = format!(
-                "🦀 **Fabio-Claw — Available Commands**\n\n{}\n\n\
+                "🦀 **BroAi — Available Commands**\n\n{}\n\n\
                  All other messages are sent to the LLM for inference.",
                 lines.join("\n")
             );
