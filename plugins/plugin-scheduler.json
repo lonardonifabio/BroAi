@@ -1,0 +1,8 @@
+{
+  "name": "plugin-scheduler",
+  "version": "0.1.0",
+  "description": "Persistent local reminders/tasks backed by SQLite",
+  "commands": ["remind", "jobs"],
+  "default_action": "remind",
+  "payload_from_args": true
+}

@@ -1,0 +1,8 @@
+{
+  "name": "plugin-updater",
+  "version": "0.1.0",
+  "description": "Safe-mode updater: checks and update planning without destructive execution",
+  "commands": ["update-check", "update-plan"],
+  "default_action": "update-check",
+  "payload_from_args": true
+}

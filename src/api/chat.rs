@@ -88,7 +88,7 @@ pub async fn chat_completions(
                 .map(|(cmd, desc)| format!("  /{:<20} {}", cmd, desc))
                 .collect();
             let content = format!(
-                "🦀 **Fabio-Claw — Available Commands**\n\n{}\n\n\
+                "🦀 **BroAi — Available Commands**\n\n{}\n\n\
                  All other messages are sent to the LLM for inference.",
                 lines.join("\n")
             );
@@ -100,9 +100,9 @@ pub async fn chat_completions(
             info!(plugin = %manifest.name, command = %command, "Dispatching to plugin");
 
             let payload = if manifest.payload_from_args && !args.is_empty() {
-                serde_json::json!({ "args": args, "city": args, "expression": args, "path": args })
+                serde_json::json!({ "command": command, "args": args, "city": args, "expression": args, "path": args })
             } else {
-                serde_json::json!({})
+                serde_json::json!({ "command": command })
             };
 
             let plugin_req = PluginRequest {

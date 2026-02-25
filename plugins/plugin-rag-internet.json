@@ -1,0 +1,8 @@
+{
+  "name": "plugin-rag-internet",
+  "version": "0.1.0",
+  "description": "Web search + lightweight retrieval/ranking with URL citations",
+  "commands": ["web-rag", "web-search"],
+  "default_action": "web-search",
+  "payload_from_args": true
+}

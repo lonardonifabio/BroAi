@@ -1,4 +1,4 @@
-# 🔌 Adding a New Plugin to Fabio-Claw
+# 🔌 Adding a New Plugin to BroAi
 
 No changes to the core runtime are required. You only need two things:
 a binary and a JSON manifest.
@@ -7,17 +7,17 @@ a binary and a JSON manifest.
 
 ## How it works
 
-At startup, Fabio-Claw scans `/opt/fabio-claw/plugins/` for `*.json` files.
+At startup, BroAi scans `/opt/broai/plugins/` for `*.json` files.
 Each manifest declares which slash-commands the plugin handles.
 The routing table is built automatically — `chat.rs` never needs to change.
 
 ```
-/opt/fabio-claw/plugins/
+/opt/broai/plugins/
 ├── my-plugin          ← compiled binary
 └── my-plugin.json     ← manifest (controls routing)
 ```
 
-When a user types `/mycommand some args`, Fabio-Claw:
+When a user types `/mycommand some args`, BroAi:
 1. Finds the manifest that lists `"mycommand"` in its `commands` array
 2. Launches the binary as a child process
 3. Sends a JSON request over STDIN
@@ -142,18 +142,18 @@ resolver = "2"
 
 ```bash
 # Build only your new plugin (fast — incremental)
-cd ~/fabio-claw/plugins
+cd ~/broai/plugins
 cargo build --release -p plugin-myname
 
 # Install binary and manifest
-sudo cp target/release/plugin-myname    /opt/fabio-claw/plugins/
-sudo cp plugin-myname.json              /opt/fabio-claw/plugins/
+sudo cp target/release/plugin-myname    /opt/broai/plugins/
+sudo cp plugin-myname.json              /opt/broai/plugins/
 
 # Restart the runtime to pick up the new manifest
-sudo systemctl restart fabio-claw
+sudo systemctl restart broai
 
 # Verify registration in logs
-journalctl -u fabio-claw | grep "Registered plugin"
+journalctl -u broai | grep "Registered plugin"
 ```
 
 You should see:
@@ -184,7 +184,7 @@ You can test any plugin in isolation from the terminal:
 
 ```bash
 echo '{"action":"run","payload":{"args":"hello world"}}' \
-  | /opt/fabio-claw/plugins/plugin-myname
+  | /opt/broai/plugins/plugin-myname
 ```
 
 Expected output:
@@ -233,9 +233,9 @@ print(json.dumps({
 
 ```bash
 chmod +x plugin-myname
-sudo cp plugin-myname /opt/fabio-claw/plugins/
-sudo cp plugin-myname.json /opt/fabio-claw/plugins/
-sudo systemctl restart fabio-claw
+sudo cp plugin-myname /opt/broai/plugins/
+sudo cp plugin-myname.json /opt/broai/plugins/
+sudo systemctl restart broai
 ```
 
 > Python plugins are slower to start (~200ms vs ~5ms for Rust) but perfectly
@@ -250,9 +250,9 @@ sudo systemctl restart fabio-claw
 □ Create plugin-myname.json manifest
 □ Add to plugins/Cargo.toml workspace (if Rust)
 □ cargo build --release -p plugin-myname
-□ sudo cp binary + json → /opt/fabio-claw/plugins/
-□ sudo systemctl restart fabio-claw
-□ journalctl -u fabio-claw | grep "Registered"
+□ sudo cp binary + json → /opt/broai/plugins/
+□ sudo systemctl restart broai
+□ journalctl -u broai | grep "Registered"
 □ Test with /mycommand or curl
 ```
 

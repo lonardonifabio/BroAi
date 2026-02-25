@@ -26,7 +26,7 @@ pub async fn list_models(State(state): State<AppState>) -> Json<ModelsResponse> 
             id: model_id,
             object: "model".to_string(),
             created: Utc::now().timestamp(),
-            owned_by: "fabio-claw-edge".to_string(),
+            owned_by: "broai-edge".to_string(),
         }],
     })
 }
