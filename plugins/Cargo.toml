@@ -4,5 +4,15 @@ members = [
     "plugin-calculator",
     "plugin-weather",
     "plugin-file-reader",
+    "plugin-system-info",
+    "plugin-net-diagnostics",
+    "plugin-log-tail",
+    "plugin-scheduler",
+    "plugin-rag-local",
+    "plugin-gpio-control",
+    "plugin-updater",
+    "plugin-rag-internet",
+    "plugin-word-builder",
+    "plugin-excel-builder",
 ]
 resolver = "2"

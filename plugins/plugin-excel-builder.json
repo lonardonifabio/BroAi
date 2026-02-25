@@ -1,0 +1,8 @@
+{
+  "name": "plugin-excel-builder",
+  "version": "0.1.0",
+  "description": "Generate .xlsx files with sheets, basic formulas and exportable tables",
+  "commands": ["make-xlsx", "sheet-template"],
+  "default_action": "make-xlsx",
+  "payload_from_args": true
+}
