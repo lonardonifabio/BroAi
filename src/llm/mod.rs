@@ -10,6 +10,7 @@ const QUEUE_CAPACITY: usize = 32;
 const DEFAULT_INFERENCE_TIMEOUT_SECS: u64 = 300;
 const N_CTX: u32 = 2048;
 const DEFAULT_N_THREADS: u32 = 4;
+const MAX_GENERATION_TOKENS: u32 = 512;
 
 #[allow(dead_code)]
 struct InferRequest {
@@ -131,7 +132,7 @@ fn worker_loop(
     info!("LLM worker ready (real inference mode)");
 
     while let Some(req) = rx.blocking_recv() {
-        let result = real_infer(&model, &req.prompt, req.max_tokens);
+        let result = real_infer(&model, &req.prompt, req.max_tokens, req.temperature);
         if req.reply.send(result).is_err() {
             warn!("Client disconnected before response was delivered");
         }
@@ -144,8 +145,9 @@ fn real_infer(
     model: &llama_cpp::LlamaModel,
     prompt: &str,
     max_tokens: u32,
+    temperature: f32,
 ) -> Result<String, AppError> {
-    use llama_cpp::standard_sampler::StandardSampler;
+    use llama_cpp::standard_sampler::{SamplerStage, StandardSampler};
     use llama_cpp::SessionParams;
 
     let n_threads = inference_threads();
@@ -161,13 +163,32 @@ fn real_infer(
     ctx.advance_context(prompt)
         .map_err(|e| AppError::LlmError(format!("Failed to advance context: {}", e)))?;
 
+    let requested_tokens = max_tokens.clamp(1, MAX_GENERATION_TOKENS) as usize;
+    let normalized_temperature = temperature.clamp(0.0, 2.0);
+
+    let sampler = StandardSampler::new_softmax(
+        vec![
+            SamplerStage::RepetitionPenalty {
+                repetition_penalty: 1.1,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                last_n: 64,
+            },
+            SamplerStage::TopK(40),
+            SamplerStage::TopP(0.95),
+            SamplerStage::MinP(0.05),
+            SamplerStage::Temperature(normalized_temperature),
+        ],
+        1,
+    );
+
     let completions = ctx
-        .start_completing_with(StandardSampler::default(), max_tokens as usize)
+        .start_completing_with(sampler, requested_tokens)
         .map_err(|e| AppError::LlmError(format!("Failed to start completion: {}", e)))?
         .into_strings();
 
-    // into_strings() yields String directly (not Result<String>)
-    let output: String = completions.collect();
+    // Apply a second .take() guard in case a downstream iterator ignores token bounds.
+    let output: String = completions.take(requested_tokens).collect();
 
     Ok(output.trim().to_string())
 }
@@ -181,11 +202,15 @@ fn inference_timeout_secs() -> u64 {
 }
 
 fn inference_threads() -> u32 {
+    let auto_threads = std::thread::available_parallelism()
+        .map(|n| n.get() as u32)
+        .unwrap_or(DEFAULT_N_THREADS);
+
     std::env::var("LLM_THREADS")
         .ok()
         .and_then(|v| v.parse::<u32>().ok())
         .filter(|v| *v > 0)
-        .unwrap_or(DEFAULT_N_THREADS)
+        .unwrap_or(auto_threads)
 }
 
 fn mock_infer(prompt: &str) -> Result<String, AppError> {
