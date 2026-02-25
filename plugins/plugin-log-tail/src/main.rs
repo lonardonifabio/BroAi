@@ -1,0 +1,7 @@
+use serde::{Deserialize, Serialize}; use serde_json::{json, Value}; use std::{fs, io::{self, Read}};
+const DEFAULT_LOG:&str="./broai.log";
+#[derive(Debug,Deserialize)] struct PluginRequest{action:String,payload:Value}
+#[derive(Debug,Serialize)] struct PluginResponse{success:bool,result:Value,error:Option<String>}
+fn main(){let mut i=String::new();io::stdin().read_to_string(&mut i).unwrap_or(0);let r=serde_json::from_str::<PluginRequest>(&i).unwrap_or(PluginRequest{action:"logs".into(),payload:json!({})});println!("{}",serde_json::to_string(&handle(r)).unwrap());}
+fn handle(req:PluginRequest)->PluginResponse{let cmd=req.payload.get("command").and_then(|v|v.as_str()).unwrap_or(req.action.as_str());let n=req.payload.get("args").and_then(|v|v.as_str()).and_then(|s|s.parse::<usize>().ok()).unwrap_or(50);let mut lines:Vec<String>=fs::read_to_string(DEFAULT_LOG).unwrap_or_default().lines().map(sanitize).collect();if cmd=="errors"{lines.retain(|l|{let x=l.to_lowercase();x.contains("error")||x.contains("warn")});}let s=lines.len().saturating_sub(n);PluginResponse{success:true,result:json!({"path":DEFAULT_LOG,"returned_lines":lines[s..].len(),"lines":lines[s..].join("\n")}),error:None}}
+fn sanitize(line:&str)->String{line.split_whitespace().map(|w|if w.contains('@'){"[REDACTED_EMAIL]".into()}else if w.to_lowercase().contains("token=")||w.to_lowercase().contains("apikey="){"[REDACTED_SECRET]".into()}else{w.into()}).collect::<Vec<String>>().join(" ")}

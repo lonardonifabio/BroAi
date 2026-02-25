@@ -1,0 +1,8 @@
+{
+  "name": "plugin-log-tail",
+  "version": "0.1.0",
+  "description": "Tail local logs with basic filtering and sanitization",
+  "commands": ["logs", "errors"],
+  "default_action": "logs",
+  "payload_from_args": true
+}
