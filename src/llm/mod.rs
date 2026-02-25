@@ -2,13 +2,14 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{mpsc, oneshot};
 use tokio::time::timeout;
-use tracing::{info, instrument, warn, error};
+use tracing::{error, info, instrument, warn};
 
 use crate::errors::AppError;
 
 const QUEUE_CAPACITY: usize = 32;
-const INFERENCE_TIMEOUT_SECS: u64 = 120;
+const DEFAULT_INFERENCE_TIMEOUT_SECS: u64 = 300;
 const N_CTX: u32 = 2048;
+const DEFAULT_N_THREADS: u32 = 4;
 
 #[allow(dead_code)]
 struct InferRequest {
@@ -42,7 +43,11 @@ impl LlmActor {
             worker_loop(model_path, rx, ready_clone);
         });
 
-        Ok(Self { sender: tx, model_name, ready })
+        Ok(Self {
+            sender: tx,
+            model_name,
+            ready,
+        })
     }
 
     #[instrument(skip(self, prompt))]
@@ -54,12 +59,18 @@ impl LlmActor {
     ) -> Result<String, AppError> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.sender
-            .try_send(InferRequest { prompt, max_tokens, temperature, reply: reply_tx })
+            .try_send(InferRequest {
+                prompt,
+                max_tokens,
+                temperature,
+                reply: reply_tx,
+            })
             .map_err(|_| AppError::QueueFull)?;
 
-        timeout(Duration::from_secs(INFERENCE_TIMEOUT_SECS), reply_rx)
+        let timeout_secs = inference_timeout_secs();
+        timeout(Duration::from_secs(timeout_secs), reply_rx)
             .await
-            .map_err(|_| AppError::Timeout(INFERENCE_TIMEOUT_SECS))?
+            .map_err(|_| AppError::Timeout(timeout_secs))?
             .map_err(|_| AppError::Cancelled)?
     }
 
@@ -80,7 +91,10 @@ fn worker_loop(
     info!(model_path = %model_path, "LLM worker starting");
 
     if !std::path::Path::new(&model_path).exists() {
-        warn!("Model not found at '{}' — running in MOCK mode.", model_path);
+        warn!(
+            "Model not found at '{}' — running in MOCK mode.",
+            model_path
+        );
         ready.store(true, std::sync::atomic::Ordering::Relaxed);
         info!("LLM worker ready (mock mode)");
         while let Some(req) = rx.blocking_recv() {
@@ -97,12 +111,17 @@ fn worker_loop(
     info!("Loading model from disk, please wait...");
 
     let model = match LlamaModel::load_from_file(&model_path, LlamaParams::default()) {
-        Ok(m) => { info!("Model loaded successfully"); m }
+        Ok(m) => {
+            info!("Model loaded successfully");
+            m
+        }
         Err(e) => {
             error!(error = %e, "Failed to load model");
             ready.store(true, std::sync::atomic::Ordering::Relaxed);
             while let Some(req) = rx.blocking_recv() {
-                let _ = req.reply.send(Err(AppError::LlmError(format!("Model load failed: {}", e))));
+                let _ = req
+                    .reply
+                    .send(Err(AppError::LlmError(format!("Model load failed: {}", e))));
             }
             return;
         }
@@ -126,11 +145,17 @@ fn real_infer(
     prompt: &str,
     max_tokens: u32,
 ) -> Result<String, AppError> {
-    use llama_cpp::SessionParams;
     use llama_cpp::standard_sampler::StandardSampler;
+    use llama_cpp::SessionParams;
 
+    let n_threads = inference_threads();
     let mut ctx = model
-        .create_session(SessionParams { n_ctx: N_CTX, n_threads: 4, ..Default::default() })
+        .create_session(SessionParams {
+            n_ctx: N_CTX,
+            n_threads,
+            n_threads_batch: n_threads,
+            ..Default::default()
+        })
         .map_err(|e| AppError::LlmError(format!("Failed to create session: {}", e)))?;
 
     ctx.advance_context(prompt)
@@ -145,6 +170,22 @@ fn real_infer(
     let output: String = completions.collect();
 
     Ok(output.trim().to_string())
+}
+
+fn inference_timeout_secs() -> u64 {
+    std::env::var("INFERENCE_TIMEOUT_SECS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .filter(|v| *v > 0)
+        .unwrap_or(DEFAULT_INFERENCE_TIMEOUT_SECS)
+}
+
+fn inference_threads() -> u32 {
+    std::env::var("LLM_THREADS")
+        .ok()
+        .and_then(|v| v.parse::<u32>().ok())
+        .filter(|v| *v > 0)
+        .unwrap_or(DEFAULT_N_THREADS)
 }
 
 fn mock_infer(prompt: &str) -> Result<String, AppError> {

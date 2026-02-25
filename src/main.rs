@@ -8,7 +8,7 @@ mod security;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::{error, info};
-use tracing_subscriber::{EnvFilter, fmt};
+use tracing_subscriber::{fmt, EnvFilter};
 
 use crate::api::AppState;
 use crate::llm::LlmActor;
@@ -35,12 +35,10 @@ impl Config {
                 .unwrap_or(8080),
             model_path: std::env::var("MODEL_PATH")
                 .unwrap_or_else(|_| "/opt/broai/models/model.gguf".into()),
-            db_path: std::env::var("DB_PATH")
-                .unwrap_or_else(|_| "/var/lib/broai/memory.db".into()),
+            db_path: std::env::var("DB_PATH").unwrap_or_else(|_| "/var/lib/broai/memory.db".into()),
             key_path: std::env::var("KEY_PATH")
                 .unwrap_or_else(|_| "/var/lib/broai/device.key".into()),
-            plugin_dir: std::env::var("PLUGIN_DIR")
-                .unwrap_or_else(|_| "/opt/broai/plugins".into()),
+            plugin_dir: std::env::var("PLUGIN_DIR").unwrap_or_else(|_| "/opt/broai/plugins".into()),
         }
     }
 }
@@ -48,18 +46,12 @@ impl Config {
 #[tokio::main]
 async fn main() {
     // Initialize tracing
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info,fabio_claw=debug"));
+    let filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info,broai=debug"));
 
-    fmt()
-        .with_env_filter(filter)
-        .with_target(true)
-        .init();
+    fmt().with_env_filter(filter).with_target(true).init();
 
-    info!(
-        "🦀 BroAi v{} starting",
-        env!("CARGO_PKG_VERSION")
-    );
+    info!("🦀 BroAi v{} starting", env!("CARGO_PKG_VERSION"));
 
     let config = Config::from_env();
 
@@ -100,13 +92,11 @@ async fn main() {
     let state = AppState {
         llm,
         memory,
-        device:  identity,
+        device: identity,
         plugins: std::sync::Arc::new(plugins),
     };
 
-    let app = crate::api::router(state).layer(
-        tower_http::cors::CorsLayer::permissive(),
-    );
+    let app = crate::api::router(state).layer(tower_http::cors::CorsLayer::permissive());
 
     let addr: SocketAddr = format!("{}:{}", config.host, config.port)
         .parse()
